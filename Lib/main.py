@@ -1,46 +1,66 @@
-#!/usr/bin/env python3
 
-from sqlalchemy import (create_engine, CheckConstraint, PrimaryKeyConstraint, UniqueConstraint,
-    Index, Column, Integer, String)
+
+from sqlalchemy import (create_engine, CheckConstraint, PrimaryKeyConstraint, UniqueConstraint, Column, Integer, String, ForeignKey)
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, relationship
+
+engine = create_engine('sqlite:///migrations_test.db')
 
 Base = declarative_base()
 
 
 class Restaurant(Base):
-    __tablename__ = 'Restaurant'
-    
+    __tablename__ = 'restaurants'
+
     id = Column(Integer(), primary_key=True)
     name = Column(String())
     price = Column(Integer())
-    
+    reviews = relationship('Review', back_populates='restaurant')
+
     def __init__(self, name, price):
         self.name = name
         self.price = price
-    
-    def __repr__(self):
-        return f'Restaurant: {self.name}, '  \
-               + f'{self.price} dollars' 
-        
 
-class Customers(Base):
-    __tablename__ = 'Customers'
-    
+    def __repr__(self):
+        return f'Restaurant: {self.name}, ' \
+               + f'{self.price} dollars'
+
+
+class Customer(Base):
+    __tablename__ = 'customers'
+
     id = Column(Integer(), primary_key=True)
     name = Column(String())
-    
+    reviews = relationship('Review', back_populates='customer')
+
     def __init__(self, name):
         self.name = name
-        
+
     def __repr__(self):
         return f'Customer: {self.name}'
     
     
+class Review(Base):
+    __tablename__ = 'reviews'
+
+    id = Column(Integer(), primary_key=True)
+    star_rating = Column(Integer())
+    restaurant_id = Column(Integer, ForeignKey('restaurants.id'))
+    customer_id = Column(Integer, ForeignKey('customers.id'))
+    restaurant = relationship('Restaurant', back_populates='reviews')
+    customer = relationship('Customer', back_populates='reviews')
+
+    def __init__(self, star_rating, restaurant, customer):
+        self.star_rating = star_rating
+        self.restaurant = restaurant
+        self.customer = customer
+
+    def __repr__(self):
+        return f'Review: Rating - {self.star_rating}'
     
     
 if __name__ == '__main__':
-    engine = create_engine('sqlite:///:memory:')
+    #engine = create_engine('sqlite:///migrations_test.db')
     Base.metadata.create_all(engine)
     
     Session = sessionmaker(bind=engine)
@@ -90,5 +110,21 @@ if __name__ == '__main__':
     customers = session.query(Customers).all()
     print(customers)
     
+    review1 = Review(star_rating=4, restaurant=Shicken_Wangs_Place, customer=John_Mbaru)
+    review2 = Review(star_rating=5, restaurant=Extra_Ordinary_Ugali, customer=Wangachi)
+    review3 = Review(star_rating=3, restaurant=Poly_Nyama_Choma, customer=Mwangi_Ace)
+
+    session.add_all([review1, review2, review3])
+    session.commit()
+
+    restaurants = session.query(Restaurant).all()
+    print(restaurants)
+
+    customers = session.query(Customer).all()
+    print(customers)
+
+    reviews = session.query(Review).all()
+    print(reviews)
     
+    session.query(Customer).first().restaurants
    
