@@ -1,6 +1,6 @@
 
 
-from sqlalchemy import (create_engine, CheckConstraint, PrimaryKeyConstraint, UniqueConstraint, Column, Integer, String, ForeignKey)
+from sqlalchemy import (create_engine, desc, CheckConstraint, PrimaryKeyConstraint, UniqueConstraint, Column, Integer, String, ForeignKey)
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship
 
@@ -30,6 +30,15 @@ class Restaurant(Base):
 
     def customers(self):
         return [review.customer for review in self.reviews]
+    
+    @classmethod
+    def fanciest(cls, session):
+        return session.query(cls).order_by(desc(cls.price)).first()
+
+    def all_reviews(self):
+        reviews = [f"Review for {self.name} by {review.customer.full_name()}: {review.star_rating} stars."
+                   for review in self.reviews]
+        return reviews
 
 
 class Customer(Base):
@@ -50,6 +59,25 @@ class Customer(Base):
 
     def restaurants(self):
         return [review.restaurant for review in self.reviews]
+    
+    def full_name(self):
+        return self.name
+
+    def favorite_restaurant(self):
+        highest_rated_review = max(self.reviews, key=lambda x: x.star_rating, default=None)
+        if highest_rated_review:
+            return highest_rated_review.restaurant
+        else:
+            return None
+
+    def add_review(self, restaurant, rating):
+        new_review = Review(star_rating=rating, restaurant=restaurant, customer=self)
+        self.reviews.append(new_review)
+
+    def delete_reviews(self, restaurant):
+        for review in self.reviews:
+            if review.restaurant == restaurant:
+                self.reviews.remove(review)
     
     
 class Review(Base):
@@ -100,26 +128,26 @@ if __name__ == '__main__':
     restaurant = session.query(Restaurant).all()
     print(restaurant)
     
-    John_Mbaru = Customers(name='John Mbaru')
+    John_Mbaru = Customer(name='John Mbaru')
     session.add(John_Mbaru)
     session.commit()
-    Wangachi = Customers(name='Wangachi')
+    Wangachi = Customer(name='Wangachi')
     session.add(Wangachi)
     session.commit()
-    Mwangi_Ace = Customers(name='Mwangi Ace')
+    Mwangi_Ace = Customer(name='Mwangi Ace')
     session.add(Mwangi_Ace)
     session.commit()
-    Sankofa_King = Customers(name='Sankofa King')
+    Sankofa_King = Customer(name='Sankofa King')
     session.add(Sankofa_King)
     session.commit()
-    Sean_Carter = Customers(name='Sean Carter')
+    Sean_Carter = Customer(name='Sean Carter')
     session.add(Sean_Carter)
     session.commit()
-    Kendrick_Lamar = Customers(name='Kendrick Lamar')
+    Kendrick_Lamar = Customer(name='Kendrick Lamar')
     session.add(Kendrick_Lamar)
     session.commit()
     
-    customers = session.query(Customers).all()
+    customers = session.query(Customer).all()
     print(customers)
     
     review1 = Review(star_rating=4, restaurant=Shicken_Wangs_Place, customer=John_Mbaru)
@@ -140,9 +168,30 @@ if __name__ == '__main__':
     
     session.query(Customer).first().restaurants
     
+    ## Object Relationship Methods
+    
     first_customer_restaurants = session.query(Customer).first().restaurants()
     print("Restaurants for the first customer:", first_customer_restaurants)
 
     first_review_customer = session.query(Review).first().customer()
     print("Customer for the first review:", first_review_customer)
+    
+    ## Aggregate and Relationship Methods
+    
+    fanciest_restaurant = Restaurant.fanciest(session)
+    print("Fanciest Restaurant:", fanciest_restaurant)
+
+    first_customer = session.query(Customer).first()
+    print("Full Name:", first_customer.full_name())
+    print("Favorite Restaurant:", first_customer.favorite_restaurant())
+
+    new_restaurant = Restaurant(name='New Restaurant', price=25)
+    session.add(new_restaurant)
+    session.commit()
+
+    first_customer.add_review(new_restaurant, 4)
+    print("Reviews after adding a new review:", first_customer.reviews)
+
+    first_customer.delete_reviews(new_restaurant)
+    print("Reviews after deleting reviews for the new restaurant:", first_customer.reviews)
    
