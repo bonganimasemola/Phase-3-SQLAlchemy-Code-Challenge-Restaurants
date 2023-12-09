@@ -13,12 +13,15 @@ class Restaurant(Base):
     
     id = Column(Integer(), primary_key=True)
     name = Column(String())
+    price = Column(Integer())
     
-    def __init__(self, name):
+    def __init__(self, name, price):
         self.name = name
+        self.price = price
     
     def __repr__(self):
-        return f'Restaurant: {self.name}'
+        return f'Restaurant: {self.name}, '  \
+               + f'{self.price} dollars' 
         
 
 class Customers(Base):
@@ -49,16 +52,16 @@ if __name__ == '__main__':
     # session.add(restaurant)
     # session.commit()
     
-    Shicken_Wangs_Place = Restaurant(name='Shicken Wangs Place')
+    Shicken_Wangs_Place = Restaurant(name='Shicken Wangs Place', price=15)
     session.add(Shicken_Wangs_Place)
     session.commit()
-    Rib_Shack = Restaurant(name='Rib Shack')
+    Rib_Shack = Restaurant(name='Rib Shack', price=18)
     session.add(Rib_Shack)
     session.commit()
-    Extra_Ordinary_Ugali = Restaurant(name='ExtraOrdinary Ugali')
+    Extra_Ordinary_Ugali = Restaurant(name='ExtraOrdinary Ugali', price=35)
     session.add(Extra_Ordinary_Ugali)
     session.commit()
-    Poly_Nyama_Choma = Restaurant(name='Poly Nyama Choma')
+    Poly_Nyama_Choma = Restaurant(name='Poly Nyama Choma', price=12)
     session.add(Poly_Nyama_Choma)
     session.commit()
     
@@ -84,6 +87,8 @@ if __name__ == '__main__':
     session.add(Kendrick_Lamar)
     session.commit()
     
+    customers = session.query(Customers).all()
+    print(customers)
     
     
    
