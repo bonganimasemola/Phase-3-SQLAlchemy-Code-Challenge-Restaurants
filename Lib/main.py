@@ -24,6 +24,12 @@ class Restaurant(Base):
     def __repr__(self):
         return f'Restaurant: {self.name}, ' \
                + f'{self.price} dollars'
+               
+    def reviews(self):
+        return self.reviews
+
+    def customers(self):
+        return [review.customer for review in self.reviews]
 
 
 class Customer(Base):
@@ -38,6 +44,12 @@ class Customer(Base):
 
     def __repr__(self):
         return f'Customer: {self.name}'
+    
+    def reviews(self):
+        return self.reviews
+
+    def restaurants(self):
+        return [review.restaurant for review in self.reviews]
     
     
 class Review(Base):
@@ -127,4 +139,10 @@ if __name__ == '__main__':
     print(reviews)
     
     session.query(Customer).first().restaurants
+    
+    first_customer_restaurants = session.query(Customer).first().restaurants()
+    print("Restaurants for the first customer:", first_customer_restaurants)
+
+    first_review_customer = session.query(Review).first().customer()
+    print("Customer for the first review:", first_review_customer)
    
